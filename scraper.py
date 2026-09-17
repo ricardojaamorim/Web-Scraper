@@ -23,28 +23,9 @@ from bs4 import BeautifulSoup
 
 BASE_URL = "https://www.pingodoce.pt"
 USER_AGENT = "PriceTrackerBot/0.1 (personal project; contact: youremail@example.com)"
-MIN_DELAY_SECONDS = 2.0  # minimum pause between requests — be polite
+MIN_DELAY_SECONDS = 2.0  # Minimum delay between requests to avoid hammering the server
 DB_PATH = "prices.db"
 
-# ---- Real selectors, derived from the full product card on pingodoce.pt ----
-# Structure observed (View Source — prices ARE in the initial HTML, so
-# requests + BeautifulSoup is enough; no headless browser needed):
-#
-#   div.product-tile-pd  [data-pid, data-gtm-info='{...clean JSON...}']
-#     div.product-tile-image > a.product-tile-image-link[href]  -> product URL
-#     div.product-tile-body
-#       div.product-detail-info
-#         div.product-name-link > a    -> product name
-#         div.product-brand-name       -> brand
-#         div.product-unit             -> "1 L | 0,9 €/L"
-#       div.product-price
-#         span.sales.reduced-price span.value[content]  -> current price
-#         span.strike-through.list span.value[content]  -> original price (promo)
-#         span.promo-message                             -> "Promoção até ..."
-#
-# The data-gtm-info attribute holds an analytics JSON blob with already-clean
-# fields (item_id, item_name, item_brand, item_category, price). We use it as
-# the primary source and fall back to the visible DOM where needed.
 PRODUCT_SELECTORS = {
     "product_card": "div.product-tile-pd",
     "name": "div.product-name-link",
@@ -55,7 +36,6 @@ PRODUCT_SELECTORS = {
     "promo_message": "span.promo-message",
     "link": "a.product-tile-image-link",
 }
-
 
 @dataclass
 class Product:
@@ -310,7 +290,29 @@ def main():
         {"cgid" : "ec_peixaria_300", "extra_params": {"pmin": "0.04"}},
         {"cgid" : "ec_padariaepastelaria_400", "extra_params": {"pmin": "0.04"}},
         {"cgid" : "ec_charcutariaqueijos_500", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_manteigasmargarinanatas_700", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_animais_2300", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_alternativasalimentares_2400", "extra_params": {"pmin": "0.04"}}, 
+        {"cgid" : "ec_parafarmacia_1800", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_bebecrianca_2200", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_higienepessoalbeleza_2100", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_livrariapapelaria_2000", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_casaeletrodomesticos_1900", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_limpeza_1800", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_vinhos_1700", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_espirituosas_1600", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_cervejassidras_1500", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_aguassumosrefrigerantes_1400", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_mercearia_1300", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_bolachascereaisguloseimas_1200", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_cafechaachocolatados_1100", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_congelados_1000", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_takeaway_2400", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_leitebebidasvegetais_900", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_iogurtessobremesas_800", "extra_params": {"pmin": "0.04"}},
+        {"cgid" : "ec_ovos_600", "extra_params": {"pmin": "0.04"}},
 
+    
     ]
     
 

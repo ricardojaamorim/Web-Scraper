@@ -5,7 +5,7 @@ import sqlite3
 conn = sqlite3.connect("prices.db") #This should be the name of the database
                                     #file created by scraper.py
 cur = conn.execute(
-    "SELECT name, brand, price, unit_price, promo_message FROM price_history LIMIT 5"
+    "SELECT name, brand, price, unit_price, promo_message FROM price_history LIMIT 100"
 )
 
 for row in cur.fetchall():
