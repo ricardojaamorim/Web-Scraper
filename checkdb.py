@@ -1,9 +1,10 @@
-#Quick check: read a few rows from prices.db and print them.
+# Quick check: read a few rows from prices.db and print them.
 
 import sqlite3
 
-conn = sqlite3.connect("prices.db") #This should be the name of the database
-                                    #file created by scraper.py
+from config import DB_PATH
+
+conn = sqlite3.connect(DB_PATH)
 cur = conn.execute(
     "SELECT name, brand, price, unit_price, promo_message FROM price_history LIMIT 100"
 )
