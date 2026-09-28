@@ -27,10 +27,10 @@ pip install requests beautifulsoup4
 Run the scraper:
 
 ```bash
-python scraper.py
+python main.py
 ```
 
-This fetches every category listed in `main()` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` in the current directory.
+This fetches every category listed in `CATEGORIES` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` in the current directory.
 
 Inspect what was saved:
 
@@ -39,6 +39,19 @@ python checkdb.py
 ```
 
 This prints the first 100 rows (`name`, `brand`, `price`, `unit_price`, `promo_message`) from `price_history`.
+
+## Project structure
+
+| File              | Responsibility                                              |
+|-------------------|---------------------------------------------------------------|
+| `main.py`         | Entry point — wires everything together and runs the scrape   |
+| `config.py`       | All configuration: `BASE_URL`, `USER_AGENT`, delays, `DB_PATH`, `PRODUCT_SELECTORS`, `CATEGORIES` |
+| `models.py`       | The `Product` dataclass                                       |
+| `http_client.py`  | `RobotsChecker` and `RateLimitedSession` (robots.txt + rate limiting) |
+| `parser.py`       | Parses category/search page HTML into `Product` records       |
+| `crawler.py`      | Pages through a whole category via the `Search-UpdateGrid` endpoint |
+| `db.py`           | SQLite schema setup and inserts                                |
+| `checkdb.py`      | Standalone script to inspect saved rows                        |
 
 ## Database schema
 
@@ -63,15 +76,14 @@ Rows are never updated in place — re-running the scraper adds a fresh snapshot
 
 ## Configuration
 
-All the knobs live at the top of `scraper.py`:
+All the knobs live in `config.py`:
 
 - `BASE_URL` — the store's base URL.
 - `USER_AGENT` — identifies the bot; update the contact email before running this against a real site.
 - `MIN_DELAY_SECONDS` — floor for the delay between requests.
 - `DB_PATH` — path to the SQLite file.
 - `PRODUCT_SELECTORS` — CSS selectors used to parse each product card; update these if the site's markup changes.
-
-The list of categories to scrape (identified by their `cgid`) is defined in `main()`.
+- `CATEGORIES` — the list of categories to scrape (identified by their `cgid`).
 
 ## Notes
 
