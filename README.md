@@ -42,35 +42,35 @@ This prints the first 100 rows (`name`, `brand`, `price`, `unit_price`, `promo_m
 
 ## Project structure
 
-| File              | Responsibility                                              |
-|-------------------|---------------------------------------------------------------|
-| `main.py`         | Entry point — wires everything together and runs the scrape   |
-| `config.py`       | All configuration: `BASE_URL`, `USER_AGENT`, delays, `DB_PATH`, `PRODUCT_SELECTORS`, `CATEGORIES` |
-| `models.py`       | The `Product` dataclass                                       |
-| `http_client.py`  | `RobotsChecker` and `RateLimitedSession` (robots.txt + rate limiting) |
-| `parser.py`       | Parses category/search page HTML into `Product` records       |
-| `crawler.py`      | Pages through a whole category via the `Search-UpdateGrid` endpoint |
-| `db.py`           | SQLite schema setup and inserts                                |
-| `checkdb.py`      | Standalone script to inspect saved rows                        |
+| File             | Responsibility                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
+| `main.py`        | Entry point — wires everything together and runs the scrape                                       |
+| `config.py`      | All configuration: `BASE_URL`, `USER_AGENT`, delays, `DB_PATH`, `PRODUCT_SELECTORS`, `CATEGORIES` |
+| `models.py`      | The `Product` dataclass                                                                           |
+| `http_client.py` | `RobotsChecker` and `RateLimitedSession` (robots.txt + rate limiting)                             |
+| `parser.py`      | Parses category/search page HTML into `Product` records                                           |
+| `crawler.py`     | Pages through a whole category via the `Search-UpdateGrid` endpoint                               |
+| `db.py`          | SQLite schema setup and inserts                                                                   |
+| `checkdb.py`     | Standalone script to inspect saved rows                                                           |
 
 ## Database schema
 
 Each run inserts one row per product into `price_history`:
 
-| Column           | Description                                      |
-|------------------|---------------------------------------------------|
-| `store`          | Retailer name (currently always "Pingo Doce")      |
-| `product_id`     | Retailer SKU/PID, when available                   |
-| `name`           | Product name                                       |
-| `brand`          | Product brand, if listed                           |
-| `category`       | `>`-joined category path (most specific first)     |
-| `price`          | Current price (what you'd pay now)                 |
-| `original_price` | Pre-discount price, if the item is on promotion    |
-| `on_promo`       | `1` if discounted, else `0`                        |
-| `promo_message`  | Promo text shown on the card, if any               |
-| `unit_price`     | Per-unit price string, e.g. `"0,9 €/L"`            |
-| `url`            | Link to the product page                           |
-| `scraped_at`     | UTC timestamp of the scrape (ISO 8601)             |
+| Column           | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `store`          | Retailer name (currently always "Pingo Doce")   |
+| `product_id`     | Retailer SKU/PID, when available                |
+| `name`           | Product name                                    |
+| `brand`          | Product brand, if listed                        |
+| `category`       | `>`-joined category path (most specific first)  |
+| `price`          | Current price (what you'd pay now)              |
+| `original_price` | Pre-discount price, if the item is on promotion |
+| `on_promo`       | `1` if discounted, else `0`                     |
+| `promo_message`  | Promo text shown on the card, if any            |
+| `unit_price`     | Per-unit price string, e.g. `"0,9 €/L"`         |
+| `url`            | Link to the product page                        |
+| `scraped_at`     | UTC timestamp of the scrape (ISO 8601)          |
 
 Rows are never updated in place — re-running the scraper adds a fresh snapshot, so you can track price changes over time with a simple `GROUP BY product_id ORDER BY scraped_at`.
 

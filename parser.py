@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from config import PRODUCT_SELECTORS
 from models import Product
 
+from urllib.parse import urljoin
 
 def parse_gtm_info(card) -> dict:
     """Extracts the analytics JSON stashed in data-gtm-info.
