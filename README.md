@@ -72,7 +72,8 @@ Options:
 | ---------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `--old`, `--new` | `drops`, `rises`, `new`, `gone` | Compare two specific runs instead of the latest two. Accepts a prefix of the run id, e.g. `2026-09-17`. Pass both or neither. |
 | `--min-pct`      | `drops`, `rises`                | Only show changes of at least this many percent (default `0`)                                                                 |
-| `--limit`        | `drops`, `rises`, `new`, `gone` | Maximum rows to show (default `20`)                                                                                           |
+| `--limit`        | `drops`, `rises`, `new`, `gone` | Maximum rows to show (default `20`, or all rows with `--csv`)                                                                 |
+| `--csv FILE`     | all commands                    | Save the result to a CSV file instead of printing it (see [Exporting to Excel](#exporting-to-excel))                         |
 | `--db`           | all                             | Path to the database (default: `DB_PATH` from `config.py`)                                                                    |
 
 Example:
@@ -82,6 +83,24 @@ python report.py --db prices.db drops --old 2026-09-17 --new 2026-09-27 --min-pc
 ```
 
 Only **complete** runs are considered when comparing: a run with fewer than 80% of the rows of the largest run (e.g. one that crashed halfway) is ignored, so it doesn't make half the catalogue look "gone". If a product name matches several products, `history` lists the matching ids so you can pick one.
+
+### Exporting to Excel
+
+Add `--csv FILE` to any report to save it instead of printing it. Exports include all matching rows (unless you pass `--limit`) and extra columns such as `product_id`, `category` and `url`:
+
+```bash
+python report.py drops --csv drops.csv
+python report.py history 41043 --csv leite.csv
+```
+
+To save a whole run (every column of every product), use `export`:
+
+```bash
+python report.py export --csv run.csv                    # latest complete run
+python report.py export --run 2026-09-27 --csv run.csv   # a specific run (id prefix)
+```
+
+The files are formatted for **Excel with Portuguese settings**, so they open correctly with a double-click: columns separated by `;`, prices written with a decimal comma (`1,29`), and UTF-8 with a BOM so accented characters display properly. CSV files are ignored by git.
 
 ## Project structure
 

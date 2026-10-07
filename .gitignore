@@ -1,2 +1,3 @@
 checkdb.py
 prices.db
+*.csv
