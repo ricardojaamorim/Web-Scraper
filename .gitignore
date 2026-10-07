@@ -1,3 +1,4 @@
 checkdb.py
 prices.db
 *.csv
+__pycache__/

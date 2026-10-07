@@ -102,6 +102,14 @@ python report.py export --run 2026-09-27 --csv run.csv   # a specific run (id pr
 
 The files are formatted for **Excel with Portuguese settings**, so they open correctly with a double-click: columns separated by `;`, prices written with a decimal comma (`1,29`), and UTF-8 with a BOM so accented characters display properly. CSV files are ignored by git.
 
+## Running with a double-click (Windows)
+
+Instead of opening a terminal, you can double-click `run_scraper.bat`. It runs `main.py` from the project folder, shows the progress in the window, and keeps the window open at the end so you can read the summary. Press any key to close it.
+
+Run it whenever you want a new price snapshot. Once a day is enough to build a useful history.
+
+If the window says `python` isn't recognised, replace `python` in `run_scraper.bat` with the full path from `where python`.
+
 ## Project structure
 
 | File               | Responsibility                                                                                    |
@@ -114,6 +122,7 @@ The files are formatted for **Excel with Portuguese settings**, so they open cor
 | `crawler.py`       | Pages through a whole category via the `Search-UpdateGrid` endpoint                               |
 | `db.py`            | SQLite schema setup and inserts                                                                   |
 | `report.py`        | CLI reports: price drops/rises, new/gone products, per-product price history                      |
+| `run_scraper.bat`  | Double-click launcher for `main.py` (Windows)                                                     |
 | `requirements.txt` | Python dependencies                                                                               |
 
 ## Database schema
