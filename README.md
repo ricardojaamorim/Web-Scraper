@@ -8,7 +8,8 @@ A small Python scraper that tracks product prices from [Pingo Doce](https://www.
 - **Rate-limited requests** — waits between requests (using the site's declared crawl delay when available) to avoid hammering the server.
 - **Robust parsing** — prefers the structured `data-gtm-info` analytics JSON embedded in each product card, falling back to DOM selectors when it's missing.
 - **Full category pagination** — follows the same `Search-UpdateGrid` endpoint the site's own "Ver mais" button uses, so it can walk an entire category without a browser.
-- **SQLite storage** — every scrape appends rows to a `price_history` table, preserving prior prices instead of overwriting them.
+- **SQLite storage** — every run appends a snapshot to a `price_history` table, preserving prior prices instead of overwriting them. Products listed in several categories (e.g. promotions and their own aisle) are saved once per run.
+- **Price reports** — `report.py` shows price drops/rises, new/gone products and per-product price history between runs.
 
 ## Requirements
 
@@ -19,7 +20,7 @@ A small Python scraper that tracks product prices from [Pingo Doce](https://www.
 Install dependencies:
 
 ```bash
-pip install requests beautifulsoup4
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -30,15 +31,27 @@ Run the scraper:
 python main.py
 ```
 
-This fetches every category listed in `CATEGORIES` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` in the current directory.
+This fetches every category listed in `CATEGORIES` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` in the current directory. Progress is printed as it goes (numbers are illustrative):
 
-Inspect what was saved:
-
-```bash
-python checkdb.py
+```text
+Scraping category: ec_talho_200
+  [page 0] start=0 -> 14 products
+  [page 1] start=14 -> 14 products
+  ...
+  [done] page 9 returned 0 products — end of category
+  -> 98 new rows for ec_talho_200 (12 already seen this run)
+Done. Run 2026-09-27T08:00:00: 6120 rows saved, 840 duplicates skipped -> prices.db
 ```
 
-This prints the first 100 rows (`name`, `brand`, `price`, `unit_price`, `promo_message`) from `price_history`.
+"Already seen this run" counts products that an earlier category in the same run had already saved (most often items from the promotions category showing up again in their own aisle). They are skipped, not saved twice.
+
+Inspect what was saved with the `sqlite3` command-line tool:
+
+```bash
+sqlite3 prices.db "SELECT name, brand, price, unit_price, promo_message FROM price_history ORDER BY id DESC LIMIT 20"
+```
+
+Or use `report.py` (below) for comparisons between runs.
 
 ### Price reports
 
@@ -72,38 +85,56 @@ Only **complete** runs are considered when comparing: a run with fewer than 80% 
 
 ## Project structure
 
-| File             | Responsibility                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| `main.py`        | Entry point — wires everything together and runs the scrape                                       |
-| `config.py`      | All configuration: `BASE_URL`, `USER_AGENT`, delays, `DB_PATH`, `PRODUCT_SELECTORS`, `CATEGORIES` |
-| `models.py`      | The `Product` dataclass                                                                           |
-| `http_client.py` | `RobotsChecker` and `RateLimitedSession` (robots.txt + rate limiting)                             |
-| `parser.py`      | Parses category/search page HTML into `Product` records                                           |
-| `crawler.py`     | Pages through a whole category via the `Search-UpdateGrid` endpoint                               |
-| `db.py`          | SQLite schema setup and inserts                                                                   |
-| `report.py`      | CLI reports: price drops/rises, new/gone products, per-product price history                      |
-| `checkdb.py`     | Standalone script to inspect saved rows                                                           |
+| File               | Responsibility                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `main.py`          | Entry point — wires everything together and runs the scrape                                       |
+| `config.py`        | All configuration: `BASE_URL`, `USER_AGENT`, delays, `DB_PATH`, `PRODUCT_SELECTORS`, `CATEGORIES` |
+| `models.py`        | The `Product` dataclass                                                                           |
+| `http_client.py`   | `RobotsChecker` and `RateLimitedSession` (robots.txt + rate limiting)                             |
+| `parser.py`        | Parses category/search page HTML into `Product` records                                           |
+| `crawler.py`       | Pages through a whole category via the `Search-UpdateGrid` endpoint                               |
+| `db.py`            | SQLite schema setup and inserts                                                                   |
+| `report.py`        | CLI reports: price drops/rises, new/gone products, per-product price history                      |
+| `requirements.txt` | Python dependencies                                                                               |
 
 ## Database schema
 
 Each run inserts one row per product into `price_history`:
 
-| Column           | Description                                     |
-| ---------------- | ----------------------------------------------- |
-| `store`          | Retailer name (currently always "Pingo Doce")   |
-| `product_id`     | Retailer SKU/PID, when available                |
-| `name`           | Product name                                    |
-| `brand`          | Product brand, if listed                        |
-| `category`       | `>`-joined category path (most specific first)  |
-| `price`          | Current price (what you'd pay now)              |
-| `original_price` | Pre-discount price, if the item is on promotion |
-| `on_promo`       | `1` if discounted, else `0`                     |
-| `promo_message`  | Promo text shown on the card, if any            |
-| `unit_price`     | Per-unit price string, e.g. `"0,9 €/L"`         |
-| `url`            | Link to the product page                        |
-| `scraped_at`     | UTC timestamp of the scrape (ISO 8601)          |
+| Column           | Description                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `id`             | Auto-incrementing row id                                                                                              |
+| `run_id`         | UTC timestamp of the run start (`YYYY-MM-DDTHH:MM:SS`), shared by every row saved in the same run                     |
+| `store`          | Retailer name (currently always "Pingo Doce")                                                                         |
+| `product_id`     | Retailer SKU/PID, when available                                                                                      |
+| `name`           | Product name                                                                                                          |
+| `brand`          | Product brand, if listed                                                                                              |
+| `category`       | Category path from the card's analytics data, most specific first, joined with `>`, e.g. `"Vitela e Vitelão > Talho"` |
+| `price`          | Current price (what you'd pay now)                                                                                    |
+| `original_price` | Pre-discount price, if the item is on promotion                                                                       |
+| `on_promo`       | `1` if discounted, else `0`                                                                                           |
+| `promo_message`  | Promo text shown on the card, if any                                                                                  |
+| `unit_price`     | Per-unit price string, e.g. `"0,9 €/L"`                                                                               |
+| `url`            | Link to the product page                                                                                              |
+| `scraped_at`     | UTC timestamp of the page the product was parsed from (ISO 8601); differs slightly between rows of the same run       |
 
-Rows are never updated in place — re-running the scraper adds a fresh snapshot, so you can track price changes over time with a simple `GROUP BY product_id ORDER BY scraped_at`.
+Indexes:
+
+- `ux_run_product`: unique on `(run_id, product_id)`, so there's at most one row per product per run.
+- `ix_product_time`: on `(product_id, scraped_at)`, which speeds up per-product history lookups.
+
+Rows are never updated in place. Each run adds a fresh snapshot tagged with its `run_id`, and within a run a product is saved only once: rows are inserted with `INSERT OR IGNORE`, so if the same product shows up in a later category, the copy saved first is kept. Use `run_id` (not `scraped_at`) to group rows by run, for example to get one product's price history:
+
+```sql
+SELECT run_id, price, original_price, on_promo
+FROM price_history
+WHERE product_id = '41043'
+ORDER BY run_id;
+```
+
+Rows without a `product_id` aren't covered by the unique index (SQLite treats NULLs as distinct), so they could in theory be saved more than once per run.
+
+**Upgrading an older database:** databases created before `run_id` existed are migrated automatically the first time `main.py` runs. The column is added, existing rows get their scrape date (`YYYY-MM-DD`) as their `run_id`, and duplicate rows for the same product on the same day are removed, keeping the first one.
 
 ## Configuration
 
@@ -114,7 +145,11 @@ All the knobs live in `config.py`:
 - `MIN_DELAY_SECONDS` — floor for the delay between requests.
 - `DB_PATH` — path to the SQLite file.
 - `PRODUCT_SELECTORS` — CSS selectors used to parse each product card; update these if the site's markup changes.
-- `CATEGORIES` — the list of categories to scrape (identified by their `cgid`).
+- `CATEGORIES` — the list of categories to scrape. Each entry has:
+  - `cgid`: the site's category id, e.g. `ec_talho_200` (take it from the category page's URL).
+  - `extra_params` (optional): extra query parameters added to every page request for that category. All current entries use `{"pmin": "0.04"}`, a minimum-price filter.
+
+  Categories are scraped in list order. Because a product is saved only once per run, a product in several categories gets the data from the first one where it appears. `ec_promos_1100000` comes first on purpose.
 
 ## Notes
 
