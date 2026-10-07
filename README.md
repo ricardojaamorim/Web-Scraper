@@ -40,6 +40,36 @@ python checkdb.py
 
 This prints the first 100 rows (`name`, `brand`, `price`, `unit_price`, `promo_message`) from `price_history`.
 
+### Price reports
+
+Once you have at least two runs saved, `report.py` compares them:
+
+```bash
+python report.py drops              # biggest price drops, latest run vs the previous one
+python report.py rises              # biggest price increases
+python report.py new                # products that appeared since the previous run
+python report.py gone               # products that disappeared
+python report.py history 41043      # price over time for one product id...
+python report.py history "leite"    # ...or by part of the name
+```
+
+Options:
+
+| Option           | Applies to                      | Description                                                                                                                   |
+| ---------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `--old`, `--new` | `drops`, `rises`, `new`, `gone` | Compare two specific runs instead of the latest two. Accepts a prefix of the run id, e.g. `2026-09-17`. Pass both or neither. |
+| `--min-pct`      | `drops`, `rises`                | Only show changes of at least this many percent (default `0`)                                                                 |
+| `--limit`        | `drops`, `rises`, `new`, `gone` | Maximum rows to show (default `20`)                                                                                           |
+| `--db`           | all                             | Path to the database (default: `DB_PATH` from `config.py`)                                                                    |
+
+Example:
+
+```bash
+python report.py --db prices.db drops --old 2026-09-17 --new 2026-09-27 --min-pct 20 --limit 50
+```
+
+Only **complete** runs are considered when comparing: a run with fewer than 80% of the rows of the largest run (e.g. one that crashed halfway) is ignored, so it doesn't make half the catalogue look "gone". If a product name matches several products, `history` lists the matching ids so you can pick one.
+
 ## Project structure
 
 | File             | Responsibility                                                                                    |
@@ -51,6 +81,7 @@ This prints the first 100 rows (`name`, `brand`, `price`, `unit_price`, `promo_m
 | `parser.py`      | Parses category/search page HTML into `Product` records                                           |
 | `crawler.py`     | Pages through a whole category via the `Search-UpdateGrid` endpoint                               |
 | `db.py`          | SQLite schema setup and inserts                                                                   |
+| `report.py`      | CLI reports: price drops/rises, new/gone products, per-product price history                      |
 | `checkdb.py`     | Standalone script to inspect saved rows                                                           |
 
 ## Database schema
