@@ -1,7 +1,12 @@
+from pathlib import Path
+
 BASE_URL = "https://www.pingodoce.pt"
 USER_AGENT = "PriceTrackerBot/0.1 (personal project; contact: youremail@example.com)"
 MIN_DELAY_SECONDS = 2.0  # Minimum delay between requests to avoid hammering the server
-DB_PATH = "prices.db"
+
+# Always next to the code, no matter which folder the scripts are launched from
+PROJECT_DIR = Path(__file__).resolve().parent
+DB_PATH = str(PROJECT_DIR / "prices.db")
 
 PRODUCT_SELECTORS = {
     "product_card": "div.product-tile-pd",

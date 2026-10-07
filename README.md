@@ -31,7 +31,7 @@ Run the scraper:
 python main.py
 ```
 
-This fetches every category listed in `CATEGORIES` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` in the current directory. Progress is printed as it goes (numbers are illustrative):
+This fetches every category listed in `CATEGORIES` (produce, meat, dairy, drinks, cleaning, etc.), parses each product, and saves the results to `prices.db` next to the code (so it's the same file whichever folder you run it from). Progress is printed as it goes (numbers are illustrative):
 
 ```text
 Scraping category: ec_talho_200
@@ -143,7 +143,7 @@ All the knobs live in `config.py`:
 - `BASE_URL` — the store's base URL.
 - `USER_AGENT` — identifies the bot; update the contact email before running this against a real site.
 - `MIN_DELAY_SECONDS` — floor for the delay between requests.
-- `DB_PATH` — path to the SQLite file.
+- `DB_PATH` — path to the SQLite file; defaults to `prices.db` in the project folder (next to `config.py`).
 - `PRODUCT_SELECTORS` — CSS selectors used to parse each product card; update these if the site's markup changes.
 - `CATEGORIES` — the list of categories to scrape. Each entry has:
   - `cgid`: the site's category id, e.g. `ec_talho_200` (take it from the category page's URL).
